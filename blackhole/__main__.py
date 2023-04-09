@@ -1,38 +1,71 @@
 """Module allows to run package as is"""
+# pylint: disable=invalid-name
 import asyncio
+import logging
+import pathlib
+import sys
 
-from blackhole import serve_to_stdout
+import yaml
 
-DEFAULT_HOST = "127.0.0.1"
+from blackhole import serve_to_stdout, serve_to_csv
 
-# Top-20 most scanned Nmap ports
-DEFAULT_PORTS = (
-    21,
-    22,
-    23,
-    25,
-    53,
-    80,
-    110,
-    111,
-    135,
-    139,
-    143,
-    443,
-    445,
-    993,
-    995,
-    1723,
-    3306,
-    3389,
-    5900,
-    8080,
-)
+CONFIG_NAME = "config.yaml"
 
-DEFAULT_CSV_NAME = "log.csv"
+# Suppress asyncio logging; allow only 'FATAL' messages
+logging.getLogger("asyncio").setLevel(logging.FATAL)
+
+
+def load_config() -> dict:
+    """
+    Load the YAML configuration
+    :return: YAML configuration as dict
+    """
+    src_root = pathlib.Path(__file__).parents[1]
+    config_path = src_root.joinpath(CONFIG_NAME)
+
+    with open(config_path, mode="r", encoding="utf-8") as config_file:
+        config = yaml.safe_load(config_file)
+
+    return config
+
 
 if __name__ == "__main__":
-    # pylint: disable=invalid-name
-    # main_coroutine = serve_to_csv(DEFAULT_HOST, DEFAULT_PORTS, DEFAULT_CSV_NAME)
-    main_coroutine = serve_to_stdout(DEFAULT_HOST, DEFAULT_PORTS)
+    conf = load_config()
+
+    logger_conf = conf.get("logger", {})
+    logging.basicConfig(level=logger_conf["level"], format=logger_conf["format"])
+
+    listener_conf = conf.get("listener", {})
+    base_params = {
+        "host": listener_conf["host"],
+        "ports": listener_conf["ports"],
+    }
+    extra_params = {
+        "read_size": listener_conf["read_size"],
+        "delay": listener_conf["delay"],
+    }
+
+    collector_conf = conf.get("collector", {})
+    collector_type = collector_conf["type"].lower()
+
+    match collector_type:
+        case "csv":
+            csv_params = collector_conf["csv"]
+            main_coroutine = serve_to_csv(
+                **base_params,
+                **csv_params,
+                **extra_params,
+            )
+        case "stdout":
+            stdout_params = collector_conf["stdout"]
+            if stdout_params is None:
+                stdout_params = {}
+            main_coroutine = serve_to_stdout(
+                **base_params,
+                **stdout_params,
+                **extra_params,
+            )
+        case _:
+            sys.exit("invalid collector type")
+
     asyncio.run(main_coroutine)

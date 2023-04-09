@@ -27,11 +27,12 @@ class ClientHandler:  # noqa, pylint: disable=too-many-instance-attributes
         :param collector: data collector
         :param extra: extra parameters
         """
-        extra_name = extra.get("name")
-        self.name = extra_name if extra_name else self.__class__.__name__
-
         peer_name = writer.get_extra_info("peername")
         self._client_id: str = ":".join(str(prop) for prop in peer_name)
+
+        extra_name = extra.get("name")
+        self.name = extra_name if extra_name else self.__class__.__name__
+        self.name += f"/{self._client_id}"
 
         self._host = extra.get("host", "unknown")
         self._port = extra.get("port", 0)

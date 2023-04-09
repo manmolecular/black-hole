@@ -12,7 +12,7 @@ from aiocsv.protocols import WithAsyncWrite
 class Collector(ABC):
     """
     Define basic collector interface.
-    Any collector should follow it (CSV-like, logs-like, db-like, etc.)
+    All child collectors should follow it (csv-like, stdout-like, db-like, etc.)
     """
 
     fields = [
@@ -28,7 +28,7 @@ class Collector(ABC):
 
     def __init__(self, name: str):
         """
-        Initialize base class
+        Initialize collector with child class name
         :param name: name of the instance used for logging
         """
         self.name = name

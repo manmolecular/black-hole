@@ -33,6 +33,7 @@ class PortListener:  # noqa, pylint: disable=too-many-instance-attributes
         :param name: internal name of the instance
         """
         self.name = name if name else self.__class__.__name__
+        self.name += f"/{port}"
 
         self.host = host
         self.port = port
@@ -49,6 +50,12 @@ class PortListener:  # noqa, pylint: disable=too-many-instance-attributes
             self.name,
             self.host,
             self.port,
+        )
+        self._log.debug(
+            "extra parameters for '%s': read_size=%d bytes, delay=%f seconds",
+            self.name,
+            self.read_size,
+            self.delay,
         )
 
     async def _start_server(self, collector: Collector):
