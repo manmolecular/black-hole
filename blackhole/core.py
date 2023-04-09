@@ -5,7 +5,7 @@ from typing import Iterable
 
 import aiofiles
 
-from blackhole.collector import CsvTypeCollector
+from blackhole.collector import CsvTypeCollector, Collector
 from blackhole.port import PortListener
 
 # Suppress asyncio logging; allow only 'FATAL' messages
@@ -16,47 +16,36 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-DEFAULT_HOST = "127.0.0.1"
 
-DEFAULT_PORTS = (
-    21,
-    22,
-    23,
-    25,
-    53,
-    80,
-    110,
-    111,
-    135,
-    139,
-    143,
-    443,
-    445,
-    993,
-    995,
-    1723,
-    3306,
-    3389,
-    5900,
-    8080,
-)
-
-
-async def serve(host: str = DEFAULT_HOST, ports: Iterable[int] = DEFAULT_PORTS):
+async def serve(host: str, ports: Iterable[int], collector: Collector) -> None:
     """
-    Setup listeners and serve
+    Start server
+    :param host: host to listen oon
+    :param ports: ports to listen on
+    :param collector: collector to save data to
     :return: None
     """
-    async with aiofiles.open("output.csv", mode="w", encoding="utf-8") as afp:
+    listeners = (PortListener(host, port, collector) for port in ports)
+
+    tasks = (listener.serve_forever() for listener in listeners)
+
+    try:
+        await asyncio.gather(*tasks)
+    except KeyboardInterrupt:  # gracefully close listeners
+        for listener in listeners:
+            await listener.close()
+
+
+async def serve_to_csv(host: str, ports: Iterable[int], filename: str) -> None:
+    """
+    Start server and save data to csv
+    :param host: host to listen on
+    :param ports: ports to listen on
+    :param filename: name of the file to write to
+    :return: None
+    """
+    async with aiofiles.open(filename, mode="w", encoding="utf-8") as afp:
         collector = CsvTypeCollector(afp)
         await collector.prepare()
 
-        listeners = (PortListener(host, port, collector) for port in ports)
-
-        tasks = (listener.serve_forever() for listener in listeners)
-
-        try:
-            await asyncio.gather(*tasks)
-        except KeyboardInterrupt:  # gracefully close listeners
-            for listener in listeners:
-                await listener.close()
+        await serve(host, ports, collector)

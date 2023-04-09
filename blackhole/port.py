@@ -68,7 +68,16 @@ class PortListener:  # noqa, pylint: disable=too-many-instance-attributes
             :return: None
             """
             self._log.debug("new client is connected, initiate listener creation")
-            listener = ClientHandler(reader, writer, collector)
+            listener = ClientHandler(
+                reader,
+                writer,
+                collector,
+                extra={
+                    "host": self.host,
+                    "port": self.port,
+                },
+            )
+
             task_handle = listener.handle(self.read_size, self.delay)
 
             asyncio.create_task(task_handle)
@@ -81,15 +90,22 @@ class PortListener:  # noqa, pylint: disable=too-many-instance-attributes
 
     async def serve_forever(self) -> None:
         """
-        Start server, assign handlers and serve it forever
+        Start server, assign handlers and serve_to_csv it forever
         :return: awaitable as 'serve_forever', None otherwise
         """
         try:
             await self._start_server(self._collector)
+        except PermissionError:
+            self._log.warning(
+                "can not start server on host '%s', port '%d' - permission error",
+                self.host,
+                self.port,
+            )
+
+            return None
         except OSError:
             self._log.warning(
-                "can not start server on host '%s', port '%d' - address already "
-                "in use",
+                "can not start server on host '%s', port '%d' - address already in use",
                 self.host,
                 self.port,
             )

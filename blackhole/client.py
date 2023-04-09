@@ -18,23 +18,26 @@ class ClientHandler:  # noqa, pylint: disable=too-many-instance-attributes
         writer: asyncio.StreamWriter,
         collector: Collector,
         *,
-        name: Union[None, str] = None,
+        extra: dict,
     ):
         """
         Initialize client handler for the client
         :param reader: stream reader for read
         :param writer: stream writer for write
         :param collector: data collector
-        :param name: internal name of the instance (optional)
+        :param extra: extra parameters
         """
-        self.name = name if name else self.__class__.__name__
+        extra_name = extra.get("name")
+        self.name = extra_name if extra_name else self.__class__.__name__
+
+        peer_name = writer.get_extra_info("peername")
+        self._client_id: str = ":".join(str(prop) for prop in peer_name)
+
+        self._host = extra.get("host", "unknown")
+        self._port = extra.get("port", 0)
 
         self._reader = reader
         self._writer = writer
-
-        self._peer_name = writer.get_extra_info("peername")
-        self._client_id: str = ":".join(str(prop) for prop in self._peer_name)
-
         self._collector = collector
 
         self._log = logging.getLogger(self.name)
@@ -62,17 +65,19 @@ class ClientHandler:  # noqa, pylint: disable=too-many-instance-attributes
 
                 return
 
-            try:
-                await self._collector.add_record(self._client_id, data, "", 0)
-            except Exception as exc:  # noqa, pylint: disable=broad-exception-caught
-                self._log.error(exc)
-
             self._log.debug(
                 "received data from client '%s' on the '%s' listener: %s",
                 self._client_id,
                 self.name,
                 data,
             )
+
+            try:
+                await self._collector.add_record(
+                    self._client_id, data, self._host, self._port
+                )
+            except Exception as err:  # noqa, pylint: disable=broad-exception-caught
+                self._log.error(err)
 
             if delay is not None:
                 await asyncio.sleep(delay)
