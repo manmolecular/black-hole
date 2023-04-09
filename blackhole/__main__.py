@@ -1,7 +1,7 @@
 """Module allows to run package as is"""
 import asyncio
 
-from blackhole import serve_to_csv
+from blackhole import serve_to_stdout
 
 DEFAULT_HOST = "127.0.0.1"
 
@@ -33,5 +33,6 @@ DEFAULT_CSV_NAME = "log.csv"
 
 if __name__ == "__main__":
     # pylint: disable=invalid-name
-    main_coroutine = serve_to_csv(DEFAULT_HOST, DEFAULT_PORTS, DEFAULT_CSV_NAME)
+    # main_coroutine = serve_to_csv(DEFAULT_HOST, DEFAULT_PORTS, DEFAULT_CSV_NAME)
+    main_coroutine = serve_to_stdout(DEFAULT_HOST, DEFAULT_PORTS)
     asyncio.run(main_coroutine)
