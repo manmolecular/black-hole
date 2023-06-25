@@ -129,5 +129,13 @@ class PortListener:  # noqa, pylint: disable=too-many-instance-attributes
         """
         if isinstance(self._server, Server):
             self._server.close()
+            self._log.debug(
+                "close the server on host '%s', port '%d'", self.host, self.port
+            )
 
             await self._server.wait_closed()
+            self._log.debug(
+                "successfully closed server on host '%s', port '%d'",
+                self.host,
+                self.port,
+            )

@@ -7,7 +7,7 @@ import sys
 
 import yaml
 
-from blackhole import serve_to_stdout, serve_to_csv
+from blackhole import Server
 
 CONFIG_NAME = "config.yaml"
 
@@ -40,7 +40,7 @@ if __name__ == "__main__":
         "host": listener_conf["host"],
         "ports": listener_conf["ports"],
     }
-    extra_params = {
+    listener_params = {
         "read_size": listener_conf["read_size"],
         "delay": listener_conf["delay"],
     }
@@ -48,24 +48,24 @@ if __name__ == "__main__":
     collector_conf = conf.get("collector", {})
     collector_type = collector_conf["type"].lower()
 
+    server = Server(host=base_params["host"], ports=base_params["ports"])
+
     match collector_type:
         case "csv":
             csv_params = collector_conf["csv"]
-            main_coroutine = serve_to_csv(
-                **base_params,
-                **csv_params,
-                **extra_params,
-            )
+            coroutine = server.serve_to_csv(**csv_params, **listener_params)
         case "stdout":
             stdout_params = collector_conf["stdout"]
             if stdout_params is None:
                 stdout_params = {}
-            main_coroutine = serve_to_stdout(
-                **base_params,
-                **stdout_params,
-                **extra_params,
-            )
+            coroutine = server.serve_to_stdout(**stdout_params, **listener_params)
         case _:
             sys.exit("invalid collector type")
 
-    asyncio.run(main_coroutine)
+    try:
+        asyncio.run(coroutine)
+    except KeyboardInterrupt:
+        logging.debug("start graceful shutdown")
+        asyncio.run(server.stop())
+
+    logging.debug("graceful shutdown is finished")
