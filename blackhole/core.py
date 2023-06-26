@@ -9,7 +9,9 @@ from blackhole.port import PortListener
 
 
 class Server:
-    """Implement manager-like instance to serve port listeners"""
+    """
+    Implement manager instance to serve multiple port listeners
+    """
 
     def __init__(self, host: str, ports: Iterable[int]):
         """
@@ -24,7 +26,7 @@ class Server:
     async def serve(self, collector: Collector, *args, **kwargs) -> None:
         """
         Start server
-        :param collector: collector to save data to
+        :param collector: collector to use as data logger
         :param args: additional args for PortListener
         :param kwargs: additional kwargs for PortListener
         :return: None
@@ -37,14 +39,6 @@ class Server:
         tasks = (listener.serve_forever() for listener in self.listeners)
 
         await asyncio.gather(*tasks)
-
-    async def stop(self):
-        """
-        Gracefully stop the server
-        :return: None
-        """
-        for listener in self.listeners:
-            await listener.close()
 
     async def serve_to_stdout(self, *args, **kwargs) -> None:
         """
@@ -59,7 +53,7 @@ class Server:
 
     async def serve_to_csv(self, filename: str, *args, **kwargs) -> None:
         """
-        Start server and save data to csv
+        Start server and log data to csv file
         :param filename: name of the file to write to
         :param args: additional args for PortListener
         :param kwargs: additional kwargs for PortListener
@@ -70,3 +64,11 @@ class Server:
             await collector.prepare()
 
             await self.serve(collector, *args, **kwargs)
+
+    async def stop(self):
+        """
+        Gracefully stop all the listeners
+        :return: None
+        """
+        for listener in self.listeners:
+            await listener.close()

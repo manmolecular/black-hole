@@ -83,5 +83,6 @@ class ClientHandler:  # noqa, pylint: disable=too-many-instance-attributes
             if delay is not None:
                 await asyncio.sleep(delay)
 
+            # Send empty data as response, imitate delay if required
             self._writer.write(b"")
             await self._writer.drain()

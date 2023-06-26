@@ -1,4 +1,4 @@
-"""Module allows to run package as is"""
+"""Main module allows to run package"""
 # pylint: disable=invalid-name
 import asyncio
 import logging
@@ -9,6 +9,7 @@ import yaml
 
 from blackhole import Server
 
+# Name of the project configuration
 CONFIG_NAME = "config.yaml"
 
 # Suppress asyncio logging; allow only 'FATAL' messages
@@ -17,8 +18,8 @@ logging.getLogger("asyncio").setLevel(logging.FATAL)
 
 def load_config() -> dict:
     """
-    Load the YAML configuration
-    :return: YAML configuration as dict
+    Load the YAML configuration file
+    :return: YAML configuration as nested dictionary
     """
     src_root = pathlib.Path(__file__).parents[1]
     config_path = src_root.joinpath(CONFIG_NAME)
@@ -60,7 +61,7 @@ if __name__ == "__main__":
                 stdout_params = {}
             coroutine = server.serve_to_stdout(**stdout_params, **listener_params)
         case _:
-            sys.exit("invalid collector type")
+            sys.exit("invalid collector type, exit")
 
     try:
         asyncio.run(coroutine)
@@ -68,4 +69,4 @@ if __name__ == "__main__":
         logging.debug("start graceful shutdown")
         asyncio.run(server.stop())
 
-    logging.debug("graceful shutdown is finished")
+    logging.debug("graceful shutdown is finished, exit")
