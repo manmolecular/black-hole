@@ -4,7 +4,7 @@ logger:
 listener:
   read_size: 10240  # read up to read_size bytes from the stream; -1 equals read until EOF
   delay: 0.0  # delay (in seconds) before dumb response on socket (hold the client)
-  host: '127.0.0.1'  # host to listen on
+  host: '0.0.0.0'  # host to listen on
   ports:  # ports to listen on, Nmap TOP-20 most popular ports by default
     - 21
     - 22
