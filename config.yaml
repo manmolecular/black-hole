@@ -1,0 +1,34 @@
+logger:
+  level: 'DEBUG'
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+listener:
+  read_size: 10240  # read up to read_size bytes from the stream; -1 equals read until EOF
+  delay: 0.0  # delay (in seconds) before dumb response on socket (hold the client)
+  host: '0.0.0.0'  # host to listen on
+  ports:  # ports to listen on, Nmap TOP-20 most popular ports by default
+    - 21
+    - 22
+    - 23
+    - 25
+    - 53
+    - 80
+    - 110
+    - 111
+    - 135
+    - 139
+    - 143
+    - 443
+    - 445
+    - 993
+    - 995
+    - 1723
+    - 3306
+    - 3389
+    - 5900
+    - 8080
+collector:  # type of data logger
+  type: 'csv'  # available options: 'stdout', 'csv'
+  csv:
+    filename: 'data.csv'  # in case of csv, filename of the csv file with data to write to
+  stdout:
+    # no additional configuration for stdout
